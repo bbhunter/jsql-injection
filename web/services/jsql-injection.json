@@ -1,5 +1,5 @@
 {
-    "version": "0.113",
+    "version": "0.114",
     "news": [
         "[Community] @secfb asks for easier target param selection. It will be the final java feature, switching next to python and bumping to v1.0",
         "[Community] Importing HTTP request also submitted by @secfb. It should be easier to import from other tools like burp. Never heard of this one.",
