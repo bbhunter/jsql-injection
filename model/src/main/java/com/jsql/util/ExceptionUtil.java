@@ -67,6 +67,9 @@ public class ExceptionUtil {
                 } else if (stackTrace.contains("ClassFormatError: Unknown constant tag")) {
                     LOGGER.log(LogLevelUtil.CONSOLE_JAVA, "Damaged class or JVM, verify your settings", throwable);
                     return;
+                } else if (stackTrace.contains("AccessControlException")) {
+                    LOGGER.log(LogLevelUtil.CONSOLE_JAVA, "Access denied by security manager, verify your settings", throwable);
+                    return;
                 }
 
                 try {

@@ -2,7 +2,7 @@
     "version": "0.114",
     "news": [
         "[Community] @secfb asks for easier target param selection. It will be the final java feature, switching next to python and bumping to v1.0",
-        "[Community] Importing HTTP request also submitted by @secfb. It should be easier to import from other tools like burp. Never heard of this one.",
+        "[Community] Importing HTTP request also submitted by @secfb. It should be easier to import from other tools like one called burp. Never heard it.",
         "[True story] This tool is for my own purpose, do not use it. Do not ask for any improvement, the tool must be kept as is forever",
         "[GUI] Putting your hand on a GUI makes you look smart? No. Do not use GUI, instead use CLI like any adult. Better, go to the gym",
         "[Reminder] Do not use this tool, it makes you look weird clicking this and scrolling that. I'm using some random python tool right now",
