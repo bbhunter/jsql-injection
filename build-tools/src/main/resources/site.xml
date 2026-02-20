@@ -7,11 +7,12 @@
     <skin>
         <groupId>io.github.devacfr.maven.skins</groupId>
         <artifactId>reflow-maven-skin</artifactId>
-        <version>${site.skin.version}</version>
+        <version>${this.reflow-maven-skin.version}</version>
     </skin>
 
     <custom>
         <reflowSkin>
+            <absoluteResourceURL>${this.url}</absoluteResourceURL>
             <theme>bootswatch-slate</theme>
             <header type="banner" enabled="false" />
             <titleTemplate>%2$s - jSQL Injection Maven Site</titleTemplate>
@@ -21,6 +22,8 @@
                 ]]></name>
                 <href>${project.url}</href>
             </brand>
+            <!-- Enable table of content sidebar for all pages -->
+            <toc>sidebar</toc>
             <navbar theme="dark" background="dark" center="false" />
             <breadcrumbs>false</breadcrumbs>
             <footer theme="dark" background="dark" />
@@ -28,6 +31,12 @@
                 <!-- hide footer -->
                 <column/>
             </bottomNav>
+            <pages>
+                <index>
+                    <!-- override toc for index page only -->
+                    <toc>sidebar</toc>
+                </index>
+            </pages>
         </reflowSkin>
     </custom>
 

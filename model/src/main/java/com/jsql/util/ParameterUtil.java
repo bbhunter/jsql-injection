@@ -44,6 +44,11 @@ public class ParameterUtil {
     private String rawRequest = StringUtils.EMPTY;
     private String rawHeader = StringUtils.EMPTY;
     private boolean isMultipartRequest = false;
+
+    public static final String PREFIX_COMMAND_QUERY = "Query#";
+    public static final String PREFIX_COMMAND_REQUEST = "Request#";
+    public static final String PREFIX_COMMAND_HEADER = "Header#";
+    public static final String PREFIX_COMMAND_COOKIE = "Cookie#";
     private static final String FORMAT_KEY_VALUE = "%s=%s";
 
     // ABNF primitives defined in RFC 7230
@@ -299,7 +304,7 @@ public class ParameterUtil {
                 .splitAsStream(url.getQuery())
                 .map(keyValue -> Arrays.copyOf(keyValue.split("="), 2))
                 .map(keyValue -> {
-                    var paramToAddStar = selectionCommand.replaceAll("^Query#", StringUtils.EMPTY);
+                    var paramToAddStar = selectionCommand.replaceAll("^"+ ParameterUtil.PREFIX_COMMAND_QUERY, StringUtils.EMPTY);
                     return new SimpleEntry<>(
                         keyValue[0],
                         (keyValue[1] == null ? StringUtils.EMPTY : keyValue[1])
@@ -328,7 +333,7 @@ public class ParameterUtil {
                     .splitAsStream(rawRequest)
                     .map(keyValue -> Arrays.copyOf(keyValue.split("="), 2))
                     .map(keyValue -> {
-                        var paramToAddStar = selectionCommand.replaceAll("^Request#", StringUtils.EMPTY);
+                        var paramToAddStar = selectionCommand.replaceAll("^"+ ParameterUtil.PREFIX_COMMAND_REQUEST, StringUtils.EMPTY);
                         return new SimpleEntry<>(
                             keyValue[0],
                             (keyValue[1] == null ? StringUtils.EMPTY : keyValue[1])
@@ -351,7 +356,7 @@ public class ParameterUtil {
                 .splitAsStream(rawHeader)
                 .map(keyValue -> Arrays.copyOf(keyValue.split(":"), 2))
                 .map(keyValue -> {
-                    var paramToAddStar = selectionCommand.replaceAll("^Header#", StringUtils.EMPTY);
+                    var paramToAddStar = selectionCommand.replaceAll("^"+ ParameterUtil.PREFIX_COMMAND_HEADER, StringUtils.EMPTY);
                     return new SimpleEntry<>(
                         keyValue[0],
                         (keyValue[1] == null ? StringUtils.EMPTY : keyValue[1])

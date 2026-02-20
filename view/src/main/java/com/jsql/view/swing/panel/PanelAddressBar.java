@@ -157,88 +157,7 @@ public class PanelAddressBar extends JPanel {
         });
 
         Action originalPaste = this.atomicTextFieldAddress.get().getActionMap().get(DefaultEditorKit.pasteAction);
-        this.atomicTextFieldAddress.get().getActionMap().put(DefaultEditorKit.pasteAction, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                try {
-                    Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    String text = (String) cb.getData(DataFlavor.stringFlavor);
-                    text = text.replace("\n", "\r\n").replace("\r\r\n", "\r\n");  // restore non-standardized
-
-                    String regexStartLine = "([^"+ PanelAddressBar.HEADER_SEPARATOR +"]+)";
-                    String regexHeaders = "((?:[^"+ PanelAddressBar.HEADER_SEPARATOR +"]+"+ PanelAddressBar.HEADER_SEPARATOR +")*)";
-                    String regexBody = "(.*)";
-                    var matcher = Pattern.compile(
-                        "(?s)" + regexStartLine + PanelAddressBar.HEADER_SEPARATOR + regexHeaders + PanelAddressBar.HEADER_SEPARATOR + regexBody
-                    ).matcher(text);
-
-                    if (matcher.find()) {
-                        String startLine = matcher.group(1);
-                        var matcherStartLine = Pattern.compile("([^ ]+) +([^ ]+) +([^ ]+)").matcher(startLine);
-                        if (matcherStartLine.find()) {
-                            LOGGER.log(LogLevelUtil.CONSOLE_INFORM, "HTTP request detected");
-                            var method = matcherStartLine.group(1);
-                            var requestTarget = matcherStartLine.group(2);  // absolute-form, authority-form and asterisk-form not managed
-                            // httpVersion unused
-                            var headers = matcher.group(2).trim();
-                            var body = matcher.group(3).trim();
-
-                            // Configure URL
-                            if (requestTarget.startsWith("/")) {  // origin-form
-                                var listHeaders = Pattern.compile(PanelAddressBar.HEADER_SEPARATOR)
-                                    .splitAsStream(headers)
-                                    .map(keyValue -> Arrays.copyOf(keyValue.split(":"), 2))
-                                    .map(keyValue -> new AbstractMap.SimpleEntry<>(
-                                        keyValue[0],
-                                        keyValue[1] == null ? StringUtils.EMPTY : keyValue[1]
-                                    )).toList();
-                                var host = listHeaders.stream()
-                                    .filter(e -> "Host".equalsIgnoreCase(e.getKey())).findFirst()
-                                    .orElse(new AbstractMap.SimpleEntry<>("Host", StringUtils.EMPTY));
-                                if (host.getValue().isEmpty()) {
-                                    LOGGER.log(LogLevelUtil.CONSOLE_ERROR, "Missing Host in origin form");
-                                    return;
-                                }
-                                requestTarget = "https://" + host.getValue().trim() + requestTarget;
-                            }
-                            PanelAddressBar.this.atomicTextFieldAddress.get().setText(requestTarget);
-
-                            // Configure method
-                            PanelAddressBar.this.atomicRadioMethod.get().setText(method);
-                            if (!Arrays.asList(PanelAddressBar.METHODS).contains(method)) {
-                                PanelAddressBar.this.inputCustomMethod.setText(method);
-                                PanelAddressBar.this.radioCustomMethod.setSelected(true);
-                            } else {
-                                Arrays.stream(PanelAddressBar.this.popupMethods.getSubElements())
-                                .map(JMenuItem.class::cast)
-                                .filter(jMenuItem -> method.equals(jMenuItem.getText()))
-                                .findFirst()
-                                .ifPresent(jMenuItem -> jMenuItem.setSelected(true));
-                            }
-
-                            PanelAddressBar.this.atomicTextFieldRequest.get().setText(
-                                body
-                                .replace("\n", "\\n")
-                                .replace("\r", "\\r")
-                            );
-                            PanelAddressBar.this.atomicTextFieldHeader.get().setText(
-                                headers
-                                .replace("\n", "\\n")
-                                .replace("\r", "\\r")
-                            );
-
-                            PanelAddressBar.this.advancedButtonAdapter.mouseClicked(true);
-                        } else {
-                            LOGGER.log(LogLevelUtil.CONSOLE_ERROR, "Incorrect HTTP request, start line must match 'method target version': {}", startLine);
-                        }
-                    } else {
-                        originalPaste.actionPerformed(actionEvent);
-                    }
-                } catch (IOException | UnsupportedFlavorException e) {
-                    LOGGER.log(LogLevelUtil.CONSOLE_JAVA, e, e);
-                }
-            }
-        });
+        this.atomicTextFieldAddress.get().getActionMap().put(DefaultEditorKit.pasteAction, new PasteAction(originalPaste));
 
         this.atomicTextFieldAddress.get().setFont(UiUtil.FONT_NON_MONO_BIG);
         this.atomicTextFieldAddress.get().setName("textFieldAddress");
@@ -533,5 +452,96 @@ public class PanelAddressBar extends JPanel {
 
     public JRadioButton getAtomicRadioHeader() {
         return this.atomicRadioHeader.get();
+    }
+
+    private class PasteAction extends AbstractAction {
+
+        private final Action originalPaste;
+
+        public PasteAction(Action originalPaste) {
+            this.originalPaste = originalPaste;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            try {
+                Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+                String text = (String) cb.getData(DataFlavor.stringFlavor);
+                text = text.replace("\n", "\r\n").replace("\r\r\n", "\r\n");  // restore non-standardized
+
+                String regexStartLine = "([^"+ PanelAddressBar.HEADER_SEPARATOR +"]+)";
+                String regexHeaders = "((?:[^"+ PanelAddressBar.HEADER_SEPARATOR +"]+"+ PanelAddressBar.HEADER_SEPARATOR +")*)";
+                String regexBody = "(.*)";
+                var matcher = Pattern.compile(
+                    "(?s)" + regexStartLine + PanelAddressBar.HEADER_SEPARATOR + regexHeaders + PanelAddressBar.HEADER_SEPARATOR + regexBody
+                ).matcher(text);
+                if (!matcher.find()) {  // no match, default paste
+                    this.originalPaste.actionPerformed(actionEvent);
+                    return;
+                }
+
+                LOGGER.log(LogLevelUtil.CONSOLE_INFORM, "HTTP request detected");
+                String startLine = matcher.group(1);
+                var matcherStartLine = Pattern.compile("([^ ]+) +([^ ]+) +([^ ]+)").matcher(startLine);
+                if (!matcherStartLine.find()) {
+                    LOGGER.log(LogLevelUtil.CONSOLE_ERROR, "Incorrect HTTP request start line: missing method, request-target or HTTP-version");
+                    return;
+                }
+
+                var method = matcherStartLine.group(1);
+                var requestTarget = matcherStartLine.group(2);  // absolute-form, authority-form and asterisk-form not managed
+                // httpVersion unused
+                var headers = matcher.group(2).trim();
+                var body = matcher.group(3).trim();
+
+                // Configure URL
+                if (requestTarget.startsWith("/")) {  // origin-form
+                    var listHeaders = Pattern.compile(PanelAddressBar.HEADER_SEPARATOR)
+                        .splitAsStream(headers)
+                        .map(keyValue -> Arrays.copyOf(keyValue.split(":"), 2))
+                        .map(keyValue -> new AbstractMap.SimpleEntry<>(
+                            keyValue[0],
+                            keyValue[1] == null ? StringUtils.EMPTY : keyValue[1]
+                        )).toList();
+                    var host = listHeaders.stream()
+                        .filter(e -> "Host".equalsIgnoreCase(e.getKey())).findFirst()
+                        .orElse(new AbstractMap.SimpleEntry<>("Host", StringUtils.EMPTY));
+                    if (host.getValue().isBlank()) {
+                        LOGGER.log(LogLevelUtil.CONSOLE_ERROR, "Incorrect HTTP request origin form: missing Host");
+                        return;
+                    }
+                    requestTarget = "https://" + host.getValue().trim() + requestTarget;
+                }
+                PanelAddressBar.this.atomicTextFieldAddress.get().setText(requestTarget);
+
+                // Configure method
+                PanelAddressBar.this.atomicRadioMethod.get().setText(method);
+                if (!Arrays.asList(PanelAddressBar.METHODS).contains(method)) {
+                    PanelAddressBar.this.inputCustomMethod.setText(method);
+                    PanelAddressBar.this.radioCustomMethod.setSelected(true);
+                } else {
+                    Arrays.stream(PanelAddressBar.this.popupMethods.getSubElements())
+                    .map(JMenuItem.class::cast)
+                    .filter(jMenuItem -> method.equals(jMenuItem.getText()))
+                    .findFirst()
+                    .ifPresent(jMenuItem -> jMenuItem.setSelected(true));
+                }
+
+                PanelAddressBar.this.atomicTextFieldRequest.get().setText(
+                    body
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                );
+                PanelAddressBar.this.atomicTextFieldHeader.get().setText(
+                    headers
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                );
+
+                PanelAddressBar.this.advancedButtonAdapter.mouseClicked(true);
+            } catch (IOException | UnsupportedFlavorException e) {
+                LOGGER.log(LogLevelUtil.CONSOLE_JAVA, e, e);
+            }
+        }
     }
 }
