@@ -14,7 +14,7 @@ import java.util.Map;
 public class JpaStackRestController extends AbstractRestController {
 
     @RequestMapping("/stack")
-    public Greeting endpointStack(@RequestParam(value="name", defaultValue="World") String name, @RequestHeader Map<String, String> headers) {
+    public Greeting endpointStack(@RequestParam(value="name") String name, @RequestHeader Map<String, String> headers) {
         if (name.toLowerCase().contains("union")) {
             return null;
         }
@@ -22,7 +22,7 @@ public class JpaStackRestController extends AbstractRestController {
     }
 
     @RequestMapping("/stack2")
-    public Greeting endpointStack2(@RequestParam(value="name", defaultValue="World") String name, @RequestParam(value="semicolon", defaultValue="true") String semicolon, @RequestHeader Map<String, String> headers) {
+    public Greeting endpointStack2(@RequestParam(value="name") String name, @RequestParam(value="semicolon", defaultValue="true") String semicolon, @RequestHeader Map<String, String> headers) {
         Greeting greeting = new Greeting(null);
         var result = new StringBuilder();
         Arrays.stream(("select First_Name from Student where '1' = '"+name+"'").split(";")).map(String::trim).forEach(query -> {
@@ -37,17 +37,17 @@ public class JpaStackRestController extends AbstractRestController {
     }
 
     @RequestMapping("/update")
-    public Greeting endpointUpdatea(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointUpdatea(@RequestParam(value="name") String name) {
         return this.getResponse(name, "update StudentForDelete set Class_Name = '' where 'not_found' = '%s'", true, true, false);
     }
 
     @RequestMapping("/delete")
-    public Greeting endpointDelete(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointDelete(@RequestParam(value="name") String name) {
         return this.getResponse(name, "delete from StudentForDelete where 'not_found' = '%s'", true, true, false);
     }
 
     @RequestMapping("/insert")
-    public Greeting endpointInsert(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointInsert(@RequestParam(value="name") String name) {
         return this.getResponse(name, "insert into StudentForDelete select * from StudentForDelete where 'not_found' = '%s'", true, true, false);
     }
 }

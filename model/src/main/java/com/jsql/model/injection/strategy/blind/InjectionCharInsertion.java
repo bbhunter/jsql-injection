@@ -78,6 +78,7 @@ public class InjectionCharInsertion {
                     String.join(
                         StringUtils.SPACE,
                         prefixSuffix.replace(InjectionCharInsertion.PREFIX, RandomStringUtils.secure().next(10, "345")),
+                        // todo should also work with AND
                         this.injectionModel.getMediatorEngine().getEngine().instance().getModelYaml().getStrategy().getBinary().getModeOr(),
                         urlTest
                     ),

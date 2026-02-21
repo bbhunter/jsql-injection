@@ -141,13 +141,14 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
 
     private List<String> initCallables(CompletionService<CallablePageSource> taskCompletionService, String[] charFromBooleanMatch) throws JSqlException {
         List<String> prefixValues = Arrays.asList(
-            RandomStringUtils.secure().next(10, "012"),  // to trigger probable failure
-            "1"  // to trigger eventual success
+            RandomStringUtils.secure().next(10, "012"),  // trigger probable failure
+            StringUtils.EMPTY,  // trigger matching, compatible with backtick
+            "1"  // trigger eventual success
         );
         List<String> prefixQuotes = Arrays.asList(
             SuspendableGetCharInsertion.LABEL_PREFIX +"'",
             SuspendableGetCharInsertion.LABEL_PREFIX,
-            SuspendableGetCharInsertion.LABEL_PREFIX +"`",  // TODO add ITs
+            SuspendableGetCharInsertion.LABEL_PREFIX +"`",
             SuspendableGetCharInsertion.LABEL_PREFIX +"\"",
             SuspendableGetCharInsertion.LABEL_PREFIX +"%bf'"  // GBK slash encoding use case
         );
@@ -157,7 +158,9 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         for (String prefixValue: prefixValues) {
             for (String prefixQuote: prefixQuotes) {
                 for (String prefixParenthesis: prefixParentheses) {
-                    this.checkInsertionChar(charFromBooleanMatch, charactersInsertion, prefixValue, prefixQuote, prefixParenthesis);
+                    String characterInsertion = prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue) + prefixParenthesis;
+                    charactersInsertion.add(characterInsertion);
+                    this.checkInsertionChar(charFromBooleanMatch, characterInsertion);
                 }
             }
         }
@@ -176,21 +179,13 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         return charactersInsertion;
     }
 
-    private void checkInsertionChar(
-        String[] charFromBooleanMatch,
-        List<String> charactersInsertion,
-        String prefixValue,
-        String prefixQuote,
-        String prefixParenthesis
-    ) throws StoppedByUserSlidingException {
-        String characterInsertion = prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue) + prefixParenthesis;
-        charactersInsertion.add(characterInsertion);
+    private void checkInsertionChar(String[] charFromBooleanMatch, String characterInsertion) throws StoppedByUserSlidingException {
         // Skipping Boolean match when already found
         if (charFromBooleanMatch[0] == null) {
             var injectionCharInsertion = new InjectionCharInsertion(
                 this.injectionModel,
                 characterInsertion,
-                prefixQuote + prefixParenthesis
+                characterInsertion
             );
             if (injectionCharInsertion.isInjectable()) {
                 if (this.isSuspended()) {

@@ -116,7 +116,7 @@ public abstract class AbstractRestController {
     // Visible injection
 
     @RequestMapping("/union")
-    public Greeting endpointUnion(@RequestParam(value="name", defaultValue="World") String name, @RequestHeader Map<String, String> headers) {
+    public Greeting endpointUnion(@RequestParam(value="name") String name, @RequestHeader Map<String, String> headers) {
         return this.getResponse(name, "select First_Name from Student where '1' = '%s'", false, false, true);
     }
 
@@ -124,12 +124,12 @@ public abstract class AbstractRestController {
     // Boolean based injection
 
     @RequestMapping("/blind")
-    public Greeting endpointBlind(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointBlind(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student where '1' = '%s'", false, false, true, false, true, false);
     }
 
     @RequestMapping("/time")
-    public Greeting endpointTime(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointTime(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student where '1' = '%s'", false, false, false);
     }
 
@@ -137,46 +137,51 @@ public abstract class AbstractRestController {
     // Error based injection
 
     @RequestMapping("/errors")
-    public Greeting endpointError(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointError(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student where '1' = '%s'", true, false, false);
     }
 
     @RequestMapping("/inside")
-    public Greeting endpointInside(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointInside(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select '%s'", true, false, false);
     }
 
     @RequestMapping("/select")
-    public Greeting endpointSelect(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointSelect(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select %s", false, false, false);
     }
 
     @RequestMapping("/order-by")
-    public Greeting endpointOrderBy(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointOrderBy(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student order by 1, '%s'", true, false, false);
+    }
+
+    @RequestMapping("/backtick")
+    public Greeting endpointBacktick(@RequestParam(value="name") String name) {
+        return this.getResponse(name, "select First_Name from Student where '1' = `First_Name%s`", false, false, true);
     }
 
 
     // Specific injection
 
     @RequestMapping("/integer-insertion-char")
-    public Greeting endpointIntegerInsertionChar(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointIntegerInsertionChar(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student where 1 = %s", true, false, true);
     }
 
     @RequestMapping("/multibit")
-    public Greeting endpointMultibit(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointMultibit(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select %s from (select 1)x where true or 1=", false, false, true);
     }
 
     @RequestMapping("/multiple-index")
-    public Greeting endpointMultipleIndex(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointMultipleIndex(@RequestParam(value="name") String name) {
         // Postgres union int on ()::text fails: PSQLException: ERROR: UNION types integer and text cannot be matched
         return this.getResponse(name, "select 1,2,3,4,First_Name,5,6 from Student where 1 = %s", true, false, true);
     }
 
     @RequestMapping("/insertion-char")
-    public Greeting endpointInsertionChar(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointInsertionChar(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select First_Name from Student where ((\"1\" = \"%s\"))", true, false, true);
     }
 
@@ -207,7 +212,7 @@ public abstract class AbstractRestController {
         path = "/csrf",
         consumes = { MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.TEXT_PLAIN_VALUE }
     )
-    public Greeting endpointCsrf(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointCsrf(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select 1,2,3,4,First_Name,5,6,7,8 from Student where '1' = '%s'", true, false, true);
     }
 
@@ -237,7 +242,7 @@ public abstract class AbstractRestController {
     }
 
     @GetMapping("/cookie")
-    public Greeting endpointCookie(HttpServletRequest request, @CookieValue(name = "name", required = false, defaultValue = StringUtils.EMPTY) String name) {
+    public Greeting endpointCookie(HttpServletRequest request, @CookieValue(name = "name", required = false) String name) {
         String nameUrlDecoded = URLDecoder.decode(name, StandardCharsets.UTF_8);
         return this.getResponse(nameUrlDecoded, "select 1,2,3,4,First_Name,5,6 from Student where '1' = '%s'", true, false, true);
     }
@@ -248,17 +253,17 @@ public abstract class AbstractRestController {
     }
 
     @RequestMapping("/basic")
-    public Greeting endpointBasicAuth(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointBasicAuth(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select 1,2,3,4,5,6,7,8,9,First_Name,10,11 from Student where 999 = %s", true, false, false);
     }
 
     @RequestMapping("/digest")
-    public Greeting endpointDigestAuth(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointDigestAuth(@RequestParam(value="name") String name) {
         return this.getResponse(name, "select 1,2,3,4,5,6,7,8,9,First_Name,10,11 from Student where 999 = %s", true, false, false);
     }
 
     @RequestMapping("/custom")
-    public Greeting endpointCustom(HttpServletRequest request, @RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointCustom(HttpServletRequest request, @RequestParam(value="name") String name) {
         if (!CustomMethodSuiteIT.CUSTOM_METHOD.equals(request.getMethod())) {
             return null;
         }
@@ -266,7 +271,7 @@ public abstract class AbstractRestController {
     }
     
     @RequestMapping("/user-agent")
-    public Greeting endpointUserAgent(HttpServletRequest request, @RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting endpointUserAgent(HttpServletRequest request, @RequestParam(value="name") String name) {
         if (
             !Arrays.asList("CUSTOM-USER-AGENT1", "CUSTOM-USER-AGENT2")
             .contains(request.getHeader("User-Agent"))

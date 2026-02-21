@@ -35,7 +35,7 @@ public class JdbcRestController {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @RequestMapping("/access")  // local testing, not used
-    public Greeting greetingAccess(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingAccess(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         ClassLoader classLoader = this.getClass().getClassLoader();
         File file = new File(Objects.requireNonNull(classLoader.getResource("access.accdb")).getFile());
@@ -48,7 +48,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/clickhouse")
-    public Greeting greetingClickhouse(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingClickhouse(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("clickhouse").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -59,7 +59,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/exasol")
-    public Greeting greetingExasol(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingExasol(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("exasol").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -70,7 +70,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/hana")
-    public Greeting greetingHana(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingHana(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("hana").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -81,7 +81,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/mckoi")  // no dialect
-    public Greeting greetingMckoi(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingMckoi(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("mckoi").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -93,7 +93,7 @@ public class JdbcRestController {
 
     // Requires low traffic to avoid error: Operation not allowed. Configured number of users exceeded
     @RequestMapping("/mimer")  // MimerSQLDialect not working: SQLGrammarException Could not prepare statement, Sequence does not exist, or no privilege
-    public Greeting greetingMimerSQL(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingMimerSQL(@RequestParam(value="name") String name) throws ClassNotFoundException {
         Class.forName("com.mimer.jdbc.Driver");  // required
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
@@ -105,7 +105,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/monetdb")
-    public Greeting greetingMonetDB(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingMonetDB(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("monetdb").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -116,7 +116,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/neo4j")
-    public Greeting greetingNeo4j(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingNeo4j(@RequestParam(value="name") String name) {
         Greeting greeting;
 
         try (org.neo4j.driver.Session session = this.driver.session()) {
@@ -136,7 +136,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/presto")
-    public Greeting greetingPresto(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingPresto(@RequestParam(value="name") String name) throws ClassNotFoundException {
         Class.forName("com.facebook.presto.jdbc.PrestoDriver");
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
@@ -148,7 +148,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/vertica")
-    public Greeting greetingVertica(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingVertica(@RequestParam(value="name") String name) {
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
             SpringApp.get("vertica").getProperty(JdbcSettings.JAKARTA_JDBC_URL),
@@ -159,7 +159,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/virtuoso")
-    public Greeting greetingVirtuoso(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingVirtuoso(@RequestParam(value="name") String name) throws ClassNotFoundException {
         Class.forName("virtuoso.jdbc3.Driver");
         String inject = name.replace(":", "\\:");
         return this.getGreeting(
@@ -174,7 +174,7 @@ public class JdbcRestController {
     // Other
     
     @RequestMapping("/ctreeace")
-    public Greeting greetingCTreeAce(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingCTreeAce(@RequestParam(value="name") String name) throws ClassNotFoundException {
         // no container
         // jdbc ctreeACE:ctreeace-connector-java:0.0 scope:system systemPath:${project.basedir}/src/test/resources/jdbc/ctreeJDBC.jar
         // c-treeACE-Express.windows.64bit.v11.5.1.64705.190310.ACE.msi
@@ -191,7 +191,7 @@ public class JdbcRestController {
     }
     
     @RequestMapping("/ignite")
-    public Greeting greetingIgnite(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingIgnite(@RequestParam(value="name") String name) throws ClassNotFoundException {
         // Fail: tables and system views cannot be used in the same query.
         // docker run -d -p 10800:10800 apacheignite/ignite
         // jdbc:ignite:thin://127.0.0.1
@@ -207,7 +207,7 @@ public class JdbcRestController {
     }
     
     @RequestMapping("/frontbase")
-    public Greeting greetingFrontbase(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingFrontbase(@RequestParam(value="name") String name) throws ClassNotFoundException {
         // container issue
         // frontbase:frontbase-connector-java:2.5.9 scope:system systemPath:${project.basedir}/src/test/resources/jdbc/frontbasejdbc.jar
         // FrontBase-8.2.18-WinNT.zip
@@ -232,7 +232,7 @@ public class JdbcRestController {
     }
     
     @RequestMapping("/iris")
-    public Greeting greetingIris(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingIris(@RequestParam(value="name") String name) throws ClassNotFoundException {
         // [FATAL] Unsupported CPU.  Please see InterSystems documentation for information on supported CPUs.
         // jdnc intersystems-iris:intersystems-iris-connector-java:3.1.0 scope:system systemPath:${project.basedir}/src/test/resources/jdbc/intersystems-jdbc-3.1.0.jar
         // docker run --name my-iris -d --publish 1972:1972 --publish 52773:52773 intersystems/iris-community:2020.3.0.221.0
@@ -253,7 +253,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/netezza")
-    public Greeting greetingNetezza(@RequestParam(value="name", defaultValue="World") String name) throws ClassNotFoundException {
+    public Greeting greetingNetezza(@RequestParam(value="name") String name) throws ClassNotFoundException {
         // no container
         // jdbc netezza:netezza:3.40 scope:system systemPath:${project.basedir}/src/test/resources/jdbc/nzjdbc-1.0.jar
         // NetezzaSoftwareEmulator_7.2.1.ova
@@ -271,7 +271,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/postgres")  // local testing, not used
-    public Greeting greetingPostgres(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingPostgres(@RequestParam(value="name") String name) {
         // pg_ctl.exe start -D "E:\Dev\pgsql\data\"
         AtomicReference<Greeting> greeting = new AtomicReference<>();
         StringBuilder result = new StringBuilder();
@@ -295,7 +295,7 @@ public class JdbcRestController {
     }
 
     @RequestMapping("/mysql")  // local testing, not used
-    public Greeting greetingMysql(@RequestParam(value="name", defaultValue="World") String name) {
+    public Greeting greetingMysql(@RequestParam(value="name") String name) {
         Greeting greeting;
         String inject = name.replace(":", "\\:");
         StringBuilder result = new StringBuilder();
