@@ -243,8 +243,11 @@ public abstract class AbstractRestController {
 
     @GetMapping("/cookie")
     public Greeting endpointCookie(HttpServletRequest request, @CookieValue(name = "name", required = false) String name) {
-        String nameUrlDecoded = URLDecoder.decode(name, StandardCharsets.UTF_8);
-        return this.getResponse(nameUrlDecoded, "select 1,2,3,4,First_Name,5,6 from Student where '1' = '%s'", true, false, true);
+        if (!StringUtils.isBlank(name)) {  // name null when checking 'Cookie: <value>'
+            String nameUrlDecoded = URLDecoder.decode(name, StandardCharsets.UTF_8);
+            return this.getResponse(nameUrlDecoded, "select 1,2,3,4,First_Name,5,6 from Student where '1' = '%s'", true, false, true);
+        }
+        return null;
     }
 
     @RequestMapping("/header")

@@ -263,12 +263,16 @@ public class ParameterUtil {
     
     public String initStar(SimpleEntry<String, String> parameterToInject) {
         String characterInsertionByUser;
-        if (parameterToInject == null) {
-            characterInsertionByUser = InjectionModel.STAR;
+        if (parameterToInject.getValue().contains(InjectionModel.STAR)) {  // star already set into value when checking all cookies
+            characterInsertionByUser = parameterToInject.getValue().replace(
+                InjectionModel.STAR,
+                InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+            );
         } else {
-            characterInsertionByUser = parameterToInject.getValue();
-            parameterToInject.setValue(InjectionModel.STAR);
+            characterInsertionByUser = parameterToInject.getValue() + InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
         }
+        // char insertion contains remainder payload when found
+        parameterToInject.setValue(InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment());
         return characterInsertionByUser;
     }
 
@@ -336,7 +340,7 @@ public class ParameterUtil {
                         var paramToAddStar = selectionCommand.replaceAll("^"+ ParameterUtil.PREFIX_COMMAND_REQUEST, StringUtils.EMPTY);
                         return new SimpleEntry<>(
                             keyValue[0],
-                            (keyValue[1] == null ? StringUtils.EMPTY : keyValue[1])
+                            (keyValue[1] == null ? StringUtils.EMPTY : keyValue[1].replace("\\n", "\n"))
                             + (paramToAddStar.equals(keyValue[0]) ? InjectionModel.STAR : StringUtils.EMPTY)
                         );
                     }).collect(Collectors.toCollection(CopyOnWriteArrayList::new));

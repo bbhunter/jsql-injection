@@ -1,13 +1,15 @@
-package com.test.method;
+package com.test.insertion;
 
 import com.jsql.model.InjectionModel;
 import com.jsql.model.exception.JSqlException;
 import com.jsql.view.subscriber.SubscriberLogger;
 import com.test.engine.mysql.ConcreteMysqlSuiteIT;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junitpioneer.jupiter.RetryingTest;
 
-class CookieSuiteIT extends ConcreteMysqlSuiteIT {
-    
+class CheckStarHeaderSuiteIT extends ConcreteMysqlSuiteIT {
+
     @Override
     public void setupInjection() throws Exception {
         InjectionModel model = new InjectionModel();
@@ -15,15 +17,17 @@ class CookieSuiteIT extends ConcreteMysqlSuiteIT {
 
         model.subscribe(new SubscriberLogger(model));
 
-        model.getMediatorUtils().parameterUtil().initQueryString("http://localhost:8080/cookie?tenant=mysql");
-        model.getMediatorUtils().parameterUtil().initHeader("Cookie: name=\"0'*\"");
-
+        model.getMediatorUtils().parameterUtil().initQueryString("http://localhost:8080/header?tenant=mysql");
+        model.getMediatorUtils().parameterUtil().initHeader("fake1:\\r\\nname:*\\r\\nfake2:");
+        
         model.setIsScanning(true);
-
+        
         model
         .getMediatorUtils()
         .preferencesUtil()
+        .withIsCheckingAllParam(false)
         .withIsCheckingAllURLParam(false)
+        .withIsCheckingAllHeaderParam(false)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBinDisabled(true)
         .withIsStrategyBlindBitDisabled(true);
@@ -40,5 +44,13 @@ class CookieSuiteIT extends ConcreteMysqlSuiteIT {
     @RetryingTest(3)
     public void listDatabases() throws JSqlException {
         super.listDatabases();
+    }
+
+    @AfterEach
+    void afterEach() {
+        Assertions.assertEquals(
+            this.injectionModel.getMediatorStrategy().getUnion(),
+            this.injectionModel.getMediatorStrategy().getStrategy()
+        );
     }
 }

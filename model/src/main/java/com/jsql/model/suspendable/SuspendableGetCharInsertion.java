@@ -49,10 +49,11 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         CompletionService<CallablePageSource> taskCompletionService = new ExecutorCompletionService<>(taskExecutor);
 
         var charFromBooleanMatch = new String[1];
+        charFromBooleanMatch[0] = characterInsertionByUser;  // either raw char or cookie char, with star
         List<String> charactersInsertion = this.initCallables(taskCompletionService, charFromBooleanMatch);
         
         var mediatorEngine = this.injectionModel.getMediatorEngine();
-        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Fingerprinting database and character insertion using ORDER BY (step 3)...");
+        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 3] Fingerprinting database and character insertion using ORDER BY...");
 
         String charFromOrderBy = null;
         
@@ -154,13 +155,14 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         );
         List<String> prefixParentheses = Arrays.asList(StringUtils.EMPTY, ")", "))");
         List<String> charactersInsertion = new ArrayList<>();
-        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Fingerprinting character insertion using boolean match (step 2)...");
+        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 2] Fingerprinting character insertion using boolean match...");
+        boolean found = false;
         for (String prefixValue: prefixValues) {
             for (String prefixQuote: prefixQuotes) {
                 for (String prefixParenthesis: prefixParentheses) {
-                    String characterInsertion = prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue) + prefixParenthesis;
-                    charactersInsertion.add(characterInsertion);
-                    this.checkInsertionChar(charFromBooleanMatch, characterInsertion);
+                    if (!found) {  // stop checking when found
+                        found = this.checkInsertionChar(charFromBooleanMatch, charactersInsertion, prefixValue, prefixQuote, prefixParenthesis);
+                    }
                 }
             }
         }
@@ -179,26 +181,52 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         return charactersInsertion;
     }
 
-    private void checkInsertionChar(String[] charFromBooleanMatch, String characterInsertion) throws StoppedByUserSlidingException {
-        // Skipping Boolean match when already found
-        if (charFromBooleanMatch[0] == null) {
-            var injectionCharInsertion = new InjectionCharInsertion(
-                this.injectionModel,
-                characterInsertion,
-                characterInsertion
-            );
-            if (injectionCharInsertion.isInjectable()) {
-                if (this.isSuspended()) {
-                    throw new StoppedByUserSlidingException();
-                }
-                charFromBooleanMatch[0] = characterInsertion;
-                LOGGER.log(
-                    LogLevelUtil.CONSOLE_SUCCESS,
-                    "Found character insertion [{}] using boolean match",
-                    () -> charFromBooleanMatch[0]
-                );
-            }
+    private boolean checkInsertionChar(
+        String[] charFromBooleanMatch,
+        List<String> charactersInsertion,
+        String prefixValue,
+        String prefixQuote,
+        String prefixParenthesis
+    ) throws StoppedByUserSlidingException {
+        String characterInsertion = charFromBooleanMatch[0].replace(
+            InjectionModel.STAR,
+            prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
+            + prefixParenthesis
+            + InjectionModel.STAR
+        );
+        charactersInsertion.add(characterInsertion);
+        var injectionCharInsertion = new InjectionCharInsertion(
+            this.injectionModel,
+            charFromBooleanMatch[0].replace(
+                InjectionModel.STAR,
+                prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
+                + prefixParenthesis
+            ),
+            charFromBooleanMatch[0].replace(
+                InjectionModel.STAR,
+                prefixQuote
+                + prefixParenthesis
+                + InjectionModel.STAR
+            )
+        );
+        if (this.isSuspended()) {
+            throw new StoppedByUserSlidingException();
         }
+        if (injectionCharInsertion.isInjectable()) {
+            charFromBooleanMatch[0] = charFromBooleanMatch[0].replace(
+                InjectionModel.STAR,
+                prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
+                + prefixParenthesis
+                + InjectionModel.STAR
+            );
+            LOGGER.log(
+                LogLevelUtil.CONSOLE_SUCCESS,
+                "Found character insertion [{}] using boolean match",
+                () -> charFromBooleanMatch[0].trim()  // trim space prefix in cookie
+            );
+            return true;
+        }
+        return false;
     }
     
     private String getCharacterInsertion(String characterInsertionByUser, String characterInsertionDetected) {

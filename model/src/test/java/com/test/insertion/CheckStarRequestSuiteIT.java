@@ -1,4 +1,4 @@
-package com.test.preferences;
+package com.test.insertion;
 
 import com.jsql.model.InjectionModel;
 import com.jsql.model.exception.JSqlException;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junitpioneer.jupiter.RetryingTest;
 
-class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
+class CheckStarRequestSuiteIT extends ConcreteMysqlSuiteIT {
     
     @Override
     public void setupInjection() throws Exception {
@@ -17,15 +17,17 @@ class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
 
         model.subscribe(new SubscriberLogger(model));
 
-        model.getMediatorUtils().parameterUtil().initQueryString(
-            "http://localhost:8080/union?tenant=mysql&name=&fake=empty"
-        );
+        model.getMediatorUtils().parameterUtil().initQueryString("http://localhost:8080/post?tenant=mysql");
+        model.getMediatorUtils().parameterUtil().initRequest("fake=empty&name=*&fake2=empty");
         
         model.setIsScanning(true);
         
         model
         .getMediatorUtils()
         .preferencesUtil()
+        .withIsCheckingAllParam(false)
+        .withIsCheckingAllURLParam(false)
+        .withIsCheckingAllRequestParam(false)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBinDisabled(true)
         .withIsStrategyBlindBitDisabled(true);
@@ -33,14 +35,14 @@ class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
         model
         .getMediatorUtils()
         .connectionUtil()
-        .withMethodInjection(model.getMediatorMethod().getQuery())
-        .withTypeRequest("GET");
+        .withMethodInjection(model.getMediatorMethod().getRequest())
+        .withTypeRequest("POST");
         
         model.beginInjection();
     }
     
     @Override
-    @RetryingTest(maxAttempts = 3, suspendForMs = 1000)
+    @RetryingTest(3)
     public void listDatabases() throws JSqlException {
         super.listDatabases();
     }

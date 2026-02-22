@@ -163,7 +163,7 @@ public class MediatorStrategy {
             }
             insertionGeneric = characterInsertion;
         } else if (this.injectionModel.getMediatorUtils().connectionUtil().getUrlBase().contains(InjectionModel.STAR)) {
-            LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Checking path...");
+            LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Checking [path] params...");
             String characterInsertion = new SuspendableGetCharInsertion(this.injectionModel).run(
                 new Input(StringUtils.EMPTY)
             );
@@ -183,7 +183,7 @@ public class MediatorStrategy {
             LogLevelUtil.CONSOLE_INFORM,
             "Using [{}] and character insertion [{}]",
             this.injectionModel.getMediatorEngine().getEngine(),
-            insertionGeneric
+            insertionGeneric.trim()  // trim space prefix in cookie
         );
         this.injectionModel.sendToViews(new Seal.MarkEngineFound(this.injectionModel.getMediatorEngine().getEngine()));
 

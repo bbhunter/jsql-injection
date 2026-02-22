@@ -34,7 +34,7 @@ public class SoapUtil {
 
     public boolean testParameters(boolean hasFoundInjection) {
         if (!hasFoundInjection) {
-            LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "{} SOAP...", () -> I18nUtil.valueByKey("LOG_CHECKING"));
+            LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "{} [SOAP] params...", () -> I18nUtil.valueByKey("LOG_CHECKING"));
         } else {
             return true;
         }

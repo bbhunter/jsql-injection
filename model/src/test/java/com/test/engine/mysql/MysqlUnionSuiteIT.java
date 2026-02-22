@@ -26,7 +26,6 @@ class MysqlUnionSuiteIT extends ConcreteMysqlSuiteIT {
         .getMediatorUtils()
         .preferencesUtil()
         .withIsCheckingAllURLParam(false)
-        .withIsCheckingAllURLParam(false)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBitDisabled(true)
         .withIsStrategyBlindBinDisabled(true);

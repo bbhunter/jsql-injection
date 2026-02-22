@@ -4,6 +4,8 @@ import com.jsql.model.InjectionModel;
 import com.jsql.model.exception.JSqlException;
 import com.jsql.view.subscriber.SubscriberLogger;
 import com.test.engine.mysql.ConcreteMysqlSuiteIT;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junitpioneer.jupiter.RetryingTest;
 
 class CheckAllHeaderSuiteIT extends ConcreteMysqlSuiteIT {
@@ -24,7 +26,6 @@ class CheckAllHeaderSuiteIT extends ConcreteMysqlSuiteIT {
         .getMediatorUtils()
         .preferencesUtil()
         .withIsCheckingAllURLParam(false)
-        .withIsCheckingAllHeaderParam(true)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBinDisabled(true)
         .withIsStrategyBlindBitDisabled(true);
@@ -41,5 +42,13 @@ class CheckAllHeaderSuiteIT extends ConcreteMysqlSuiteIT {
     @RetryingTest(3)
     public void listDatabases() throws JSqlException {
         super.listDatabases();
+    }
+
+    @AfterEach
+    void afterEach() {
+        Assertions.assertEquals(
+            this.injectionModel.getMediatorStrategy().getUnion(),
+            this.injectionModel.getMediatorStrategy().getStrategy()
+        );
     }
 }

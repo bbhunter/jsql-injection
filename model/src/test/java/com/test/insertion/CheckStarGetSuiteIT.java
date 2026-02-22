@@ -1,4 +1,4 @@
-package com.test.preferences;
+package com.test.insertion;
 
 import com.jsql.model.InjectionModel;
 import com.jsql.model.exception.JSqlException;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junitpioneer.jupiter.RetryingTest;
 
-class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
+class CheckStarGetSuiteIT extends ConcreteMysqlSuiteIT {
     
     @Override
     public void setupInjection() throws Exception {
@@ -18,7 +18,7 @@ class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
         model.subscribe(new SubscriberLogger(model));
 
         model.getMediatorUtils().parameterUtil().initQueryString(
-            "http://localhost:8080/union?tenant=mysql&name=&fake=empty"
+            "http://localhost:8080/union?tenant=mysql&name=*&fake=empty"
         );
         
         model.setIsScanning(true);
@@ -26,6 +26,8 @@ class CheckAllGetSuiteIT extends ConcreteMysqlSuiteIT {
         model
         .getMediatorUtils()
         .preferencesUtil()
+        .withIsCheckingAllParam(false)
+        .withIsCheckingAllURLParam(false)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBinDisabled(true)
         .withIsStrategyBlindBitDisabled(true);

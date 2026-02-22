@@ -51,13 +51,14 @@ public abstract class AbstractMethodInjection implements Serializable {
      * @throws JSqlException when no params integrity, process stopped by user, or injection failure
      */
     public boolean testParameters() throws JSqlException {
+        this.injectionModel.setAnalysisReport(StringUtils.EMPTY);  // force reset to prevent aggregating report when testing all params
         var hasFoundInjection = false;
-        
+
         // Injects URL, Request or Header params only if user tests every params
         // or method is selected by user.
         if (
-            !this.injectionModel.getMediatorUtils().preferencesUtil().isCheckingAllParam()
-            && this.injectionModel.getMediatorUtils().connectionUtil().getMethodInjection() != this
+            this != this.injectionModel.getMediatorUtils().connectionUtil().getMethodInjection()
+            && !this.isCheckingAllParam()
             || this.getParams().isEmpty()
         ) {
             return false;
@@ -147,6 +148,7 @@ public abstract class AbstractMethodInjection implements Serializable {
         // then loop through each path to add * at the end of value and test each strategy.
         // Marks * are erased between each test.
         if (!attributesJson.isEmpty() && this.injectionModel.getMediatorUtils().preferencesUtil().isCheckingAllJsonParam()) {
+            LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "{} [JSON] params...", () -> I18nUtil.valueByKey("LOG_CHECKING"));
             hasFoundInjection = this.injectionModel.getMediatorUtils().jsonUtil().testJsonParam(this, paramStar);
         } else {
             hasFoundInjection = this.testJsonlessParam(paramStar);  // Standard non JSON injection

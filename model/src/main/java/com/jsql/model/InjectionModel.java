@@ -382,7 +382,7 @@ public class InjectionModel extends AbstractModelObservable implements Serializa
             this.mediatorUtils.parameterUtil().getListRequest().isEmpty()
             && this.mediatorUtils.csrfUtil().getTokenCsrf() == null
         ) {
-            return dataInjection;
+            return StringUtils.EMPTY;
         }
             
         // Set connection method
@@ -498,7 +498,7 @@ public class InjectionModel extends AbstractModelObservable implements Serializa
         if (!isUsingIndex) {
             query = paramLead.replace(
                 InjectionModel.STAR,
-                sqlTrail + this.mediatorEngine.getEngine().instance().endingComment()
+                sqlTrail
             );
         } else {
             // Replace injection point by indexes found for Union strategy
@@ -509,7 +509,6 @@ public class InjectionModel extends AbstractModelObservable implements Serializa
                     String.format(EngineYaml.FORMAT_INDEX, this.mediatorStrategy.getSpecificUnion().getVisibleIndex()),
                     sqlTrail
                 )
-                + this.mediatorEngine.getEngine().instance().endingComment()
             );
         }
         return query;
@@ -637,5 +636,9 @@ public class InjectionModel extends AbstractModelObservable implements Serializa
 
     public void appendAnalysisReport(String analysisReport, boolean isInit) {
         this.analysisReport += (isInit ? StringUtils.EMPTY : "<br>&#10;<br>&#10;") + analysisReport;
+    }
+
+    public void setAnalysisReport(String analysisReport) {
+        this.analysisReport = analysisReport;
     }
 }
