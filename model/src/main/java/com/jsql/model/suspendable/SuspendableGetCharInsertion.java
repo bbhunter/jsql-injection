@@ -75,7 +75,11 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
                     }
                     
                     charFromOrderBy = currentCallable.getCharacterInsertion();
-                    LOGGER.log(LogLevelUtil.CONSOLE_SUCCESS, "Found character insertion [{}] using ORDER BY and compatible with Error strategy", charFromOrderBy);
+                    LOGGER.log(
+                        LogLevelUtil.CONSOLE_SUCCESS,
+                        "Found character insertion [{}] using ORDER BY and compatible with Error strategy",
+                        charFromOrderBy.trim()
+                    );
                     break;
                 }
             } catch (InterruptedException e) {
@@ -169,9 +173,11 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         for (String characterInsertion: charactersInsertion) {
             taskCompletionService.submit(
                 new CallablePageSource(
-                    characterInsertion
-                    + StringUtils.SPACE  // covered by cleaning
-                    + this.injectionModel.getMediatorEngine().getEngine().instance().sqlOrderBy(),
+                    characterInsertion.replace(
+                        InjectionModel.STAR,
+                        StringUtils.SPACE  // covered by cleaning
+                        + this.injectionModel.getMediatorEngine().getEngine().instance().sqlOrderBy()
+                    ),
                     characterInsertion,
                     this.injectionModel,
                     "prefix#orderby"

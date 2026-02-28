@@ -326,7 +326,7 @@ public class ParameterUtil {
         this.rawRequest = rawRequest;
         this.listRequest.clear();
         if (StringUtils.isNotEmpty(rawRequest)) {
-            if (this.isMultipartRequest) {
+            if (this.isMultipartRequest || this.isRequestSoap()) {
                 // Pass request containing star * param without any parsing
                 this.listRequest = new CopyOnWriteArrayList<>(List.of(new SimpleEntry<>(
                     rawRequest,
@@ -406,9 +406,7 @@ public class ParameterUtil {
     }
 
     public boolean isRequestSoap() {
-        return this.rawRequest
-            .trim()
-            .matches("^(<soapenv:|<\\?xml).*");
+        return this.rawRequest.trim().matches("(?s)^\\s*(<soapenv:|<\\?xml).*");
     }
 
     

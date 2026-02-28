@@ -83,7 +83,7 @@ public abstract class AbstractMethodInjection implements Serializable {
 
     private boolean checkParamWithStar() throws JSqlException {
         SimpleEntry<String, String> parameterToInject = this.getParams().stream()
-            .filter(entry -> entry.getValue().contains("*"))
+            .filter(entry -> entry.getValue().contains("*") || entry.getKey().contains("*"))  // key when soap
             .findFirst()
             .orElse(null);
         if (parameterToInject != null) {

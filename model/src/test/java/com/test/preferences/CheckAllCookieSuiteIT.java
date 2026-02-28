@@ -1,4 +1,4 @@
-package com.test.special;
+package com.test.preferences;
 
 import com.jsql.model.InjectionModel;
 import com.jsql.model.exception.JSqlException;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junitpioneer.jupiter.RetryingTest;
 
-class CheckStarJsonParamSuiteIT extends ConcreteMysqlSuiteIT {
+class CheckAllCookieSuiteIT extends ConcreteMysqlSuiteIT {
     
     @Override
     public void setupInjection() throws Exception {
@@ -17,42 +17,23 @@ class CheckStarJsonParamSuiteIT extends ConcreteMysqlSuiteIT {
 
         model.subscribe(new SubscriberLogger(model));
 
-        model.getMediatorUtils().parameterUtil().initQueryString("http://localhost:8080/json");
-        model.getMediatorUtils().parameterUtil().initRequest("""
-            tenant=mysql&name={
-                "c": 1,
-                "b": {
-                    "b": [
-                        1,
-                        true,
-                        null,
-                        {
-                            "a": {
-                                "a": "*"
-                            }
-                        }
-                    ]
-                }
-            }
-        """);
-
-        model.setIsScanning(true);
+        model.getMediatorUtils().parameterUtil().initQueryString("http://localhost:8080/cookie?tenant=mysql");
+        model.getMediatorUtils().parameterUtil().initHeader("Cookie: fake=;name=;fake2=");
         
+        model.setIsScanning(true);
+
         model
         .getMediatorUtils()
         .preferencesUtil()
-        .withIsCheckingAllRequestParam(false)
-        .withIsCheckingAllJsonParam(false)
+        .withIsCheckingAllURLParam(false)
         .withIsStrategyTimeDisabled(true)
         .withIsStrategyBlindBinDisabled(true)
-        .withIsStrategyBlindBitDisabled(true)
-        .withIsStrategyMultibitDisabled(true);
+        .withIsStrategyBlindBitDisabled(true);
 
         model
         .getMediatorUtils()
         .connectionUtil()
-        .withMethodInjection(model.getMediatorMethod().getRequest())
-        .withTypeRequest("POST");
+        .withMethodInjection(model.getMediatorMethod().getHeader());
         
         model.beginInjection();
     }

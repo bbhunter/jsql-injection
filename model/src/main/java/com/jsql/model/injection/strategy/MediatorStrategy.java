@@ -156,7 +156,12 @@ public class MediatorStrategy {
                 : new SuspendableGetCharInsertion(this.injectionModel).run(
                     new Input(characterInsertionByUser)
                 );
-            if (characterInsertion.contains(InjectionModel.STAR)) {  // When injecting all parameters or JSON
+            if (this.injectionModel.getMediatorUtils().parameterUtil().isRequestSoap()) {
+                parameterToInject.setValue(StringUtils.EMPTY);  // key only when soap
+                this.injectionModel.getMediatorUtils().parameterUtil().initRequest(
+                    parameterToInject.getKey().replace(InjectionModel.STAR, characterInsertion)
+                );
+            } else if (characterInsertion.contains(InjectionModel.STAR)) {  // When injecting all parameters or JSON
                 parameterToInject.setValue(characterInsertion);
             } else {  // When injecting last parameter
                 parameterToInject.setValue(characterInsertion.replaceAll("(\\w)$", "$1+") + InjectionModel.STAR);

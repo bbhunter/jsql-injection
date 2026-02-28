@@ -29,7 +29,7 @@ public class CountryRepository {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
-	public Country findCountry(String name) throws JsonProcessingException {
+	public Country findCountry(String name) {
         Country country = new Country();
         String nameUrlDecoded = URLDecoder.decode(name, StandardCharsets.UTF_8);
         try {

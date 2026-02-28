@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -44,11 +45,17 @@ public class SoapUtil {
             && this.injectionModel.getMediatorUtils().parameterUtil().isRequestSoap()
         ) {
             try {
-                var doc = SoapUtil.convertToDocument(this.injectionModel.getMediatorUtils().parameterUtil().getRawRequest());
-                LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Parsing SOAP from Request...");
-                return this.isTextNodeInjectable(doc, doc.getDocumentElement());
+                LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Parsing SOAP request...");
+                if (this.injectionModel.getMediatorUtils().parameterUtil().getRawRequest().contains(InjectionModel.STAR)) {
+                    return this.injectionModel.getMediatorMethod().getRequest().testParameters();
+                } else {
+                    var document = SoapUtil.convertToDocument(this.injectionModel.getMediatorUtils().parameterUtil().getRawRequest());
+                    return this.isTextNodeInjectable(document, document.getDocumentElement());
+                }
             } catch (ParserConfigurationException | IOException | SAXException e) {
-                LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "SOAP not detected");
+                LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Incorrect SOAP template: {}", e.getMessage());
+            } catch (JSqlException e) {
+                LOGGER.log(LogLevelUtil.CONSOLE_ERROR, "No SOAP Request injection");
             }
         }
         return false;
@@ -64,24 +71,35 @@ public class SoapUtil {
         return builder.parse(new InputSource(new StringReader(xmlStr)));
     }
 
-    public boolean isTextNodeInjectable(Document doc, Node node) {
+    public boolean isTextNodeInjectable(Document originDocument, Node node) {
         var nodeList = node.getChildNodes();
+        if (nodeList.getLength() == 0) {  // force node check when empty
+            try {
+                var documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                var document = documentBuilderFactory.newDocumentBuilder().newDocument();
+                Text textNode = document.createTextNode(StringUtils.EMPTY);
+                Node nodeWithText = originDocument.importNode(textNode, true);
+                node.appendChild(nodeWithText);
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(LogLevelUtil.CONSOLE_JAVA, e, e);
+            }
+        }
         for (var i = 0 ; i < nodeList.getLength() ; i++) {
             var currentNode = nodeList.item(i);
             if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
-                if (this.isTextNodeInjectable(doc, currentNode)) {  // calls this method for all the children which is Element
+                if (this.isTextNodeInjectable(originDocument, currentNode)) {
                     return true;
                 }
-            } else if (currentNode.getNodeType() == Node.TEXT_NODE) {
-                
-                SoapUtil.removeInjectionPoint(doc, doc.getDocumentElement());
-                currentNode.setTextContent(currentNode.getTextContent().replace(InjectionModel.STAR, StringUtils.EMPTY) + InjectionModel.STAR);
-                this.injectionModel.getMediatorUtils().parameterUtil().initRequest(SoapUtil.convertDocumentToString(doc));
-                
+            } else {
+                SoapUtil.removeInjectionPoint(originDocument, originDocument.getDocumentElement());
+                var origin = currentNode.getTextContent();
+                currentNode.setTextContent(InjectionModel.STAR);
+                this.injectionModel.getMediatorUtils().parameterUtil().initRequest(SoapUtil.convertDocumentToString(originDocument));
+
                 try {
                     LOGGER.log(
                         LogLevelUtil.CONSOLE_INFORM,
-                        "{} SOAP {}={}",
+                        "{} [SOAP] {}={}",
                         () -> I18nUtil.valueByKey("LOG_CHECKING"),
                         () -> currentNode.getParentNode().getNodeName(),
                         () -> currentNode.getTextContent().replace(InjectionModel.STAR, StringUtils.EMPTY)
@@ -89,8 +107,8 @@ public class SoapUtil {
                     if (this.injectionModel.getMediatorMethod().getRequest().testParameters()) {
                         return true;
                     }
-                } catch (JSqlException e) {
-                    // Injection failure
+                    currentNode.setTextContent(origin);  // restore
+                } catch (JSqlException e) {  // Injection failure
                     LOGGER.log(
                         LogLevelUtil.CONSOLE_ERROR,
                         String.format(
