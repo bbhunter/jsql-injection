@@ -35,8 +35,6 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
     
     private static final Logger LOGGER = LogManager.getRootLogger();
 
-    private static final String LABEL_PREFIX = "prefix";
-
     public SuspendableGetCharInsertion(InjectionModel injectionModel) {
         super(injectionModel);
     }
@@ -151,13 +149,13 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             "1"  // trigger eventual success
         );
         List<String> prefixQuotes = Arrays.asList(
-            SuspendableGetCharInsertion.LABEL_PREFIX +"'",
-            SuspendableGetCharInsertion.LABEL_PREFIX,
-            SuspendableGetCharInsertion.LABEL_PREFIX +"`",
-            SuspendableGetCharInsertion.LABEL_PREFIX +"\"",
-            SuspendableGetCharInsertion.LABEL_PREFIX +"%bf'"  // GBK slash encoding use case
+            "'",
+            StringUtils.EMPTY,
+            "`",
+            "\"",
+            "%bf'"  // GBK slash encoding use case
         );
-        List<String> prefixParentheses = Arrays.asList(StringUtils.EMPTY, ")", "))");
+        List<String> prefixParentheses = Arrays.asList(StringUtils.EMPTY +"%20", ")", "))");  // %20 required, + or space not working in path
         List<String> charactersInsertion = new ArrayList<>();
         LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 2] Fingerprinting character insertion using boolean match...");
         boolean found = false;
@@ -165,7 +163,7 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             for (String prefixQuote: prefixQuotes) {
                 for (String prefixParenthesis: prefixParentheses) {
                     if (!found) {  // stop checking when found
-                        found = this.checkInsertionChar(charFromBooleanMatch, charactersInsertion, prefixValue, prefixQuote, prefixParenthesis);
+                        found = this.checkInsertionChar(charFromBooleanMatch, charactersInsertion, prefixValue + prefixQuote + prefixParenthesis);
                     }
                 }
             }
@@ -190,30 +188,17 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
     private boolean checkInsertionChar(
         String[] charFromBooleanMatch,
         List<String> charactersInsertion,
-        String prefixValue,
-        String prefixQuote,
         String prefixParenthesis
     ) throws StoppedByUserSlidingException {
         String characterInsertion = charFromBooleanMatch[0].replace(
             InjectionModel.STAR,
-            prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
-            + prefixParenthesis
-            + InjectionModel.STAR
+            prefixParenthesis + InjectionModel.STAR
         );
         charactersInsertion.add(characterInsertion);
         var injectionCharInsertion = new InjectionCharInsertion(
             this.injectionModel,
-            charFromBooleanMatch[0].replace(
-                InjectionModel.STAR,
-                prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
-                + prefixParenthesis
-            ),
-            charFromBooleanMatch[0].replace(
-                InjectionModel.STAR,
-                prefixQuote
-                + prefixParenthesis
-                + InjectionModel.STAR
-            )
+            charFromBooleanMatch[0].replace(InjectionModel.STAR, prefixParenthesis),
+            charFromBooleanMatch[0].replace(InjectionModel.STAR, prefixParenthesis + InjectionModel.STAR)
         );
         if (this.isSuspended()) {
             throw new StoppedByUserSlidingException();
@@ -221,9 +206,7 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         if (injectionCharInsertion.isInjectable()) {
             charFromBooleanMatch[0] = charFromBooleanMatch[0].replace(
                 InjectionModel.STAR,
-                prefixQuote.replace(SuspendableGetCharInsertion.LABEL_PREFIX, prefixValue)
-                + prefixParenthesis
-                + InjectionModel.STAR
+                prefixParenthesis + InjectionModel.STAR
             );
             LOGGER.log(
                 LogLevelUtil.CONSOLE_SUCCESS,

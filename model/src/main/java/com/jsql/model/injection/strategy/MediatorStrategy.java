@@ -170,7 +170,7 @@ public class MediatorStrategy {
         } else if (this.injectionModel.getMediatorUtils().connectionUtil().getUrlBase().contains(InjectionModel.STAR)) {
             LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "Checking [path] params...");
             String characterInsertion = new SuspendableGetCharInsertion(this.injectionModel).run(
-                new Input(StringUtils.EMPTY)
+                new Input(InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment())
             );
             String urlBase = this.injectionModel.getMediatorUtils().connectionUtil().getUrlBase();
             this.injectionModel.getMediatorUtils().connectionUtil().setUrlBase(
@@ -201,9 +201,9 @@ public class MediatorStrategy {
             // Multibit requires '0'
             // TODO char insertion 0' should also work on "where x='$param'"
             var backupCharacterInsertion = parameterToInject.getValue();
-            parameterToInject.setValue(InjectionModel.STAR);
+            parameterToInject.setValue(InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment());
             this.multibit.checkApplicability();
-            parameterToInject.setValue(backupCharacterInsertion);
+            parameterToInject.setValue(backupCharacterInsertion);  // required to restore after check
         } else {
             this.multibit.checkApplicability();
         }

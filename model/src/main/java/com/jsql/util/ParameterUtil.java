@@ -269,7 +269,10 @@ public class ParameterUtil {
                 InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
             );
         } else {
-            characterInsertionByUser = parameterToInject.getValue() + InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
+            characterInsertionByUser = parameterToInject.getValue()
+            + "+"  // required when char insertion numeric by user and not found, space not working as zipped
+            + InjectionModel.STAR
+            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
         }
         // char insertion contains remainder payload when found
         parameterToInject.setValue(InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment());
@@ -373,17 +376,11 @@ public class ParameterUtil {
     public String getQueryStringFromEntries() {
         return this.listQueryString.stream()
             .filter(Objects::nonNull)
-            .map(entry -> {
-                if (
-                    this.injectionModel.getMediatorStrategy().getStrategy() == this.injectionModel.getMediatorStrategy().getMultibit()
-                    && entry.getValue() != null
-                    && entry.getValue().contains(InjectionModel.STAR)
-                ) {
-                    return String.format(ParameterUtil.FORMAT_KEY_VALUE, entry.getKey(), InjectionModel.STAR);
-                } else {
-                    return String.format(ParameterUtil.FORMAT_KEY_VALUE, entry.getKey(), entry.getValue());
-                }
-            })
+            .map(entry -> String.format(
+                ParameterUtil.FORMAT_KEY_VALUE,
+                entry.getKey(),
+                entry.getValue())
+            )
             .collect(Collectors.joining("&"));
     }
 
