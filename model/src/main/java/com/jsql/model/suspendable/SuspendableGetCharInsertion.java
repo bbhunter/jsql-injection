@@ -46,12 +46,12 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         ExecutorService taskExecutor = this.injectionModel.getMediatorUtils().threadUtil().getExecutor("CallableGetInsertionCharacter");
         CompletionService<CallablePageSource> taskCompletionService = new ExecutorCompletionService<>(taskExecutor);
 
-        var charFromBooleanMatch = new String[1];
-        charFromBooleanMatch[0] = characterInsertionByUser;  // either raw char or cookie char, with star
-        List<String> charactersInsertion = this.initCallables(taskCompletionService, charFromBooleanMatch);
+        var characterInsertionFoundOrByUser = new String[1];
+        characterInsertionFoundOrByUser[0] = characterInsertionByUser;  // either raw char or cookie char, with star
+        List<String> charactersInsertion = this.initCallables(taskCompletionService, characterInsertionFoundOrByUser);
         
         var mediatorEngine = this.injectionModel.getMediatorEngine();
-        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 3] Fingerprinting database and character insertion using ORDER BY...");
+        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 3] Fingerprinting database and prefix using ORDER BY...");
 
         String charFromOrderBy = null;
         
@@ -75,8 +75,8 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
                     charFromOrderBy = currentCallable.getCharacterInsertion();
                     LOGGER.log(
                         LogLevelUtil.CONSOLE_SUCCESS,
-                        "Found character insertion [{}] using ORDER BY and compatible with Error strategy",
-                        charFromOrderBy.trim()
+                        "Found prefix [{}] using ORDER BY and compatible with Error strategy",
+                        SuspendableGetCharInsertion.format(charFromOrderBy)
                     );
                     break;
                 }
@@ -88,8 +88,8 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             }
         }
         this.injectionModel.getMediatorUtils().threadUtil().shutdown(taskExecutor);
-        if (charFromOrderBy == null && charFromBooleanMatch[0] != null) {
-            charFromOrderBy = charFromBooleanMatch[0];
+        if (charFromOrderBy == null && characterInsertionFoundOrByUser[0] != null) {
+            charFromOrderBy = characterInsertionFoundOrByUser[0];
         }
         return this.getCharacterInsertion(characterInsertionByUser, charFromOrderBy);
     }
@@ -142,7 +142,7 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             .toList();
     }
 
-    private List<String> initCallables(CompletionService<CallablePageSource> taskCompletionService, String[] charFromBooleanMatch) throws JSqlException {
+    private List<String> initCallables(CompletionService<CallablePageSource> taskCompletionService, String[] characterInsertionFoundOrByUser) throws JSqlException {
         List<String> prefixValues = Arrays.asList(
             RandomStringUtils.secure().next(10, "012"),  // trigger probable failure
             StringUtils.EMPTY,  // trigger matching, compatible with backtick
@@ -155,15 +155,23 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             "\"",
             "%bf'"  // GBK slash encoding use case
         );
-        List<String> prefixParentheses = Arrays.asList(StringUtils.EMPTY +"%20", ")", "))");  // %20 required, + or space not working in path
+        List<String> prefixParentheses = Arrays.asList(
+            StringUtils.EMPTY +"%20",  // %20 required, + or space not working in path
+            ")",
+            "))"
+        );
         List<String> charactersInsertion = new ArrayList<>();
-        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 2] Fingerprinting character insertion using boolean match...");
-        boolean found = false;
+        LOGGER.log(LogLevelUtil.CONSOLE_DEFAULT, "[Step 2] Fingerprinting prefix using boolean match...");
+        boolean isFound = false;
         for (String prefixValue: prefixValues) {
             for (String prefixQuote: prefixQuotes) {
                 for (String prefixParenthesis: prefixParentheses) {
-                    if (!found) {  // stop checking when found
-                        found = this.checkInsertionChar(charFromBooleanMatch, charactersInsertion, prefixValue + prefixQuote + prefixParenthesis);
+                    if (!isFound) {  // stop checking when found
+                        isFound = this.checkInsertionChar(
+                            characterInsertionFoundOrByUser,
+                            charactersInsertion,
+                            prefixValue + prefixQuote + prefixParenthesis
+                        );
                     }
                 }
             }
@@ -186,32 +194,46 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
     }
 
     private boolean checkInsertionChar(
-        String[] charFromBooleanMatch,
+        String[] characterInsertionFoundOrByUser,
         List<String> charactersInsertion,
         String prefixParenthesis
-    ) throws StoppedByUserSlidingException {
-        String characterInsertion = charFromBooleanMatch[0].replace(
+    ) throws StoppedByUserSlidingException {  // requires prefix by user for cookie, else empty and failing
+//        charactersInsertion.add(
+//            prefixParenthesis
+//            + InjectionModel.STAR
+//            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+//        );
+        charactersInsertion.add(characterInsertionFoundOrByUser[0].replace(
             InjectionModel.STAR,
-            prefixParenthesis + InjectionModel.STAR
-        );
-        charactersInsertion.add(characterInsertion);
+            prefixParenthesis
+            + InjectionModel.STAR
+            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+        ));
+
         var injectionCharInsertion = new InjectionCharInsertion(
             this.injectionModel,
-            charFromBooleanMatch[0].replace(InjectionModel.STAR, prefixParenthesis),
-            charFromBooleanMatch[0].replace(InjectionModel.STAR, prefixParenthesis + InjectionModel.STAR)
+//            prefixParenthesis,
+//            prefixParenthesis + InjectionModel.STAR
+//            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+            characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis),
+            characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis + InjectionModel.STAR)
         );
         if (this.isSuspended()) {
             throw new StoppedByUserSlidingException();
         }
         if (injectionCharInsertion.isInjectable()) {
-            charFromBooleanMatch[0] = charFromBooleanMatch[0].replace(
+//            characterInsertionFoundOrByUser[0] = prefixParenthesis
+//                + InjectionModel.STAR
+//                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
+            characterInsertionFoundOrByUser[0] = characterInsertionFoundOrByUser[0].replace(
                 InjectionModel.STAR,
                 prefixParenthesis + InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
             );
             LOGGER.log(
                 LogLevelUtil.CONSOLE_SUCCESS,
-                "Found character insertion [{}] using boolean match",
-                () -> charFromBooleanMatch[0].trim()  // trim space prefix in cookie
+                "Found [{}] using boolean match",
+                () -> SuspendableGetCharInsertion.format(characterInsertionFoundOrByUser[0])
             );
             return true;
         }
@@ -225,24 +247,34 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
             String logCharacterInsertion = characterInsertionDetectedFixed;
             LOGGER.log(
                 LogLevelUtil.CONSOLE_ERROR,
-                "No character insertion found, forcing to [{}]",
-                () -> logCharacterInsertion.replace(InjectionModel.STAR, StringUtils.EMPTY)
+                "No prefix found, forcing to [{}]",
+                () -> SuspendableGetCharInsertion.format(logCharacterInsertion)
             );
-        } else if (!characterInsertionByUser.replace(InjectionModel.STAR, StringUtils.EMPTY).equals(characterInsertionDetectedFixed)) {
-            String characterInsertionByUserFormat = characterInsertionByUser.replace(InjectionModel.STAR, StringUtils.EMPTY);
+        } else if (
+            !SuspendableGetCharInsertion.format(characterInsertionByUser).isBlank()
+            && !SuspendableGetCharInsertion.format(characterInsertionByUser).equals(
+                SuspendableGetCharInsertion.format(characterInsertionDetectedFixed)
+            )
+        ) {
+            String finalCharacterInsertionDetectedFixed = characterInsertionDetectedFixed;
             LOGGER.log(
-                LogLevelUtil.CONSOLE_DEFAULT,
-                "Char insertion found automatically, disable auto search in Preferences to force value [{}]",
-                () -> characterInsertionByUserFormat
+                LogLevelUtil.CONSOLE_INFORM,
+                "Found prefix [{}], disable auto search in Preferences to force [{}]",
+                () -> SuspendableGetCharInsertion.format(finalCharacterInsertionDetectedFixed),
+                () -> SuspendableGetCharInsertion.format(characterInsertionByUser)
             );
         } else {
             LOGGER.log(
                 LogLevelUtil.CONSOLE_INFORM,
                 "{} [{}]",
                 () -> I18nUtil.valueByKey("LOG_USING_INSERTION_CHARACTER"),
-                () -> characterInsertionDetected.replace(InjectionModel.STAR, StringUtils.EMPTY)
+                () -> SuspendableGetCharInsertion.format(characterInsertionDetected)
             );
         }
         return characterInsertionDetectedFixed;
+    }
+
+    public static String format(String prefix) {  // trim space prefix in cookie
+        return prefix.trim().replaceAll("(%20)?"+ Pattern.quote(InjectionModel.STAR) +".*", StringUtils.EMPTY);
     }
 }

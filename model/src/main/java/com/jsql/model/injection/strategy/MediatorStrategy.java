@@ -17,6 +17,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MediatorStrategy {
 
@@ -186,9 +187,9 @@ public class MediatorStrategy {
 
         LOGGER.log(
             LogLevelUtil.CONSOLE_INFORM,
-            "Using [{}] and character insertion [{}]",
+            "Using [{}] and prefix [{}]",
             this.injectionModel.getMediatorEngine().getEngine(),
-            insertionGeneric.trim()  // trim space prefix in cookie
+            SuspendableGetCharInsertion.format(insertionGeneric)
         );
         this.injectionModel.sendToViews(new Seal.MarkEngineFound(this.injectionModel.getMediatorEngine().getEngine()));
 

@@ -210,7 +210,7 @@ public class ParameterUtil {
             || StringUtils.countMatches(this.getRequestFromEntries(), "*") >= 2
             || StringUtils.countMatches(this.getHeaderFromEntries(), "*") >= 2
         ) {
-            throw new InjectionFailureException("param selected or character insertion [*] can be only used once in URL, Request or Header");
+            throw new InjectionFailureException("param selected or prefix [*] can be only used once in URL, Request or Header");
         }
     }
     
@@ -266,16 +266,20 @@ public class ParameterUtil {
         if (parameterToInject.getValue().contains(InjectionModel.STAR)) {  // star already set into value when checking all cookies
             characterInsertionByUser = parameterToInject.getValue().replace(
                 InjectionModel.STAR,
-                InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+                InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
             );
         } else {
             characterInsertionByUser = parameterToInject.getValue()
-            + "+"  // required when char insertion numeric by user and not found, space not working as zipped
+            + (parameterToInject.getValue().matches("\\d$") ? "+" : StringUtils.EMPTY)  // required when char insertion numeric by user and not found, space not working as zipped
             + InjectionModel.STAR
             + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
         }
         // char insertion contains remainder payload when found
-        parameterToInject.setValue(InjectionModel.STAR + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment());
+        parameterToInject.setValue(
+            InjectionModel.STAR
+            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+        );
         return characterInsertionByUser;
     }
 
