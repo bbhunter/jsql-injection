@@ -1,6 +1,7 @@
 package com.jsql.model.suspendable;
 
 import com.jsql.model.InjectionModel;
+import com.jsql.util.CookiesUtil;
 import com.jsql.view.subscriber.Seal;
 import com.jsql.model.exception.JSqlException;
 import com.jsql.model.exception.StoppedByUserSlidingException;
@@ -198,38 +199,60 @@ public class SuspendableGetCharInsertion extends AbstractSuspendable {
         List<String> charactersInsertion,
         String prefixParenthesis
     ) throws StoppedByUserSlidingException {  // requires prefix by user for cookie, else empty and failing
-//        charactersInsertion.add(
-//            prefixParenthesis
-//            + InjectionModel.STAR
-//            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
-//        );
-        charactersInsertion.add(characterInsertionFoundOrByUser[0].replace(
-            InjectionModel.STAR,
-            prefixParenthesis
-            + InjectionModel.STAR
-            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
-        ));
+        var isCookie = this.injectionModel.getMediatorMethod().getHeader() == this.injectionModel.getMediatorUtils().connectionUtil().getMethodInjection()
+            && this.injectionModel.getMediatorUtils().parameterUtil().getListHeader()
+            .stream()
+            .anyMatch(entry ->
+                CookiesUtil.COOKIE.equalsIgnoreCase(entry.getKey())
+                && entry.getValue().contains(InjectionModel.STAR)
+            );
+        if (isCookie) {
+            charactersInsertion.add(
+                prefixParenthesis
+                + InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+            );
+        } else {
+            charactersInsertion.add(characterInsertionFoundOrByUser[0].replace(
+                InjectionModel.STAR,
+                prefixParenthesis
+                + InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+            ));
+        }
 
-        var injectionCharInsertion = new InjectionCharInsertion(
-            this.injectionModel,
-//            prefixParenthesis,
-//            prefixParenthesis + InjectionModel.STAR
-//            + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
-            characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis),
-            characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis + InjectionModel.STAR)
-        );
+        InjectionCharInsertion injectionCharInsertion;
+        if (isCookie) {
+            injectionCharInsertion = new InjectionCharInsertion(
+                this.injectionModel,
+                characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis),
+                characterInsertionFoundOrByUser[0].replace(InjectionModel.STAR, prefixParenthesis + InjectionModel.STAR)
+            );
+        } else {
+            injectionCharInsertion = new InjectionCharInsertion(
+                this.injectionModel,
+                prefixParenthesis,
+                prefixParenthesis + InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+            );
+        }
+
         if (this.isSuspended()) {
             throw new StoppedByUserSlidingException();
         }
         if (injectionCharInsertion.isInjectable()) {
-//            characterInsertionFoundOrByUser[0] = prefixParenthesis
-//                + InjectionModel.STAR
-//                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
-            characterInsertionFoundOrByUser[0] = characterInsertionFoundOrByUser[0].replace(
-                InjectionModel.STAR,
-                prefixParenthesis + InjectionModel.STAR
-                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
-            );
+            if (isCookie) {
+                characterInsertionFoundOrByUser[0] = characterInsertionFoundOrByUser[0].replace(
+                    InjectionModel.STAR,
+                    prefixParenthesis + InjectionModel.STAR
+                    + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment()
+                );
+            } else {
+            characterInsertionFoundOrByUser[0] = prefixParenthesis
+                + InjectionModel.STAR
+                + this.injectionModel.getMediatorEngine().getEngine().instance().endingComment();
+            }
+
             LOGGER.log(
                 LogLevelUtil.CONSOLE_SUCCESS,
                 "Found [{}] using boolean match",
